@@ -43,8 +43,8 @@
           </div>
         </div>
         <div class="signal-pair" id="signalPair">BTC/USDT · 2s cycle</div>
-        <div class="confidence">Neural Confidence: <span id="confPct" style="color:var(--buy)">82%</span></div>
-        <div class="confidence-bar-wrap"><div id="confBar" class="confidence-bar" style="width:82%;background:var(--buy)"></div></div>
+        <div class="confidence">Neural Confidence: <span id="confPct" style="color:var(--buy)">84%</span></div>
+        <div class="confidence-bar-wrap"><div id="confBar" class="confidence-bar" style="width:84%;background:var(--buy)"></div></div>
       </div>
 
       <div style="margin-top:8px;background:var(--bg3);border-radius:8px;padding:9px 10px;">
@@ -132,9 +132,9 @@
 
 <script src="js/neural-brain.js"></script>
 <script>
-// Rich supporting functions
+// Rich dashboard functions
 function initPairs() {
-  const pairs = ['XAU/USD','XAG/USD','BTC/USDT','ETH/USDT','SOL/USDT'];
+  const pairs = ['XAU/USD','XAG/USD','BTC/USDT','ETH/USDT','SOL/USDT','BNB/USDT'];
   const grid = document.getElementById('pairGrid');
   grid.innerHTML = '';
   pairs.forEach(p => {
@@ -154,13 +154,13 @@ function drawEquity() {
   ctx.beginPath();
   ctx.strokeStyle = '#00d4aa';
   ctx.lineWidth = 3;
-  ctx.shadowBlur = 20;
+  ctx.shadowBlur = 15;
   ctx.shadowColor = '#00d4aa';
 
-  ctx.moveTo(0, 120);
-  for (let i = 0; i < 120; i++) {
-    const x = i * (canvas.width / 120);
-    const y = 80 + Math.sin(i / 8) * 35 + Math.random() * 8;
+  ctx.moveTo(0, 130);
+  for (let i = 0; i < 130; i++) {
+    const x = i * (canvas.width / 130);
+    const y = 100 + Math.sin(i / 10) * 40;
     ctx.lineTo(x, y);
   }
   ctx.stroke();
@@ -176,8 +176,8 @@ function addTrade(side, pair, conf) {
       <span class="trade-pair">${pair}</span>
     </div>
     <div style="text-align:right">
-      <div class="trade-pnl ${side==='BUY'?'green':'red'}">+$${(Math.random()*65+28).toFixed(2)}</div>
-      <div style="font-size:10px;color:var(--muted)">${conf}%</div>
+      <div class="trade-pnl ${side==='BUY' ? 'green' : 'red'}">+$${(Math.random()*80 + 25).toFixed(2)}</div>
+      <div style="font-size:10px;color:var(--muted)">${conf}% confidence</div>
     </div>
   `;
   log.prepend(item);
@@ -208,12 +208,14 @@ function emergencyHalt() {
   document.getElementById('statusText').textContent = 'EMERGENCY HALT';
 }
 
-// Boot
+// Boot everything
 function bootDashboard() {
   initPairs();
   drawEquity();
-  for (let i = 0; i < 6; i++) addTrade('BUY', 'BTC/USDT', 82);
-  for (let i = 0; i < 5; i++) addWhaleAlert();
+  
+  // Add initial content
+  for (let i = 0; i < 8; i++) addTrade(Math.random() > 0.5 ? 'BUY' : 'SELL', 'BTC/USDT', 78 + Math.floor(Math.random()*15));
+  for (let i = 0; i < 6; i++) addWhaleAlert();
 
   if (typeof initNeuralCore === 'function') initNeuralCore();
 }
