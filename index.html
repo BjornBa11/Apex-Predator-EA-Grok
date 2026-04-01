@@ -47,17 +47,16 @@
         <div class="confidence-bar-wrap"><div id="confBar" class="confidence-bar" style="width:82%;background:var(--buy)"></div></div>
       </div>
 
-             <!-- Neural Checklist + Whale Score -->
       <div style="margin-top:8px;background:var(--bg3);border-radius:8px;padding:9px 10px;">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">9-LAYER NEURAL CHECKLIST</div>
         <div id="signalChecks"></div>
         
-        <!-- Whale Conviction inside the box -->
         <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
           <div style="font-size:10px;color:var(--muted)">Whale Conviction Score</div>
           <div id="whaleScore" style="font-size:16px;font-weight:800;color:var(--whale)">9.2</div>
         </div>
       </div>
+    </div>
 
     <div class="card">
       <div class="card-title">Technical Indicators</div>
@@ -74,7 +73,7 @@
   <div class="col">
     <div class="card">
       <div class="card-title">Equity Curve (session)</div>
-      <canvas id="equityChart" width="600" height="140"></canvas>
+      <canvas id="equityChart" width="620" height="160"></canvas>
     </div>
 
     <div class="card">
@@ -133,14 +132,11 @@
 
 <script src="js/neural-brain.js"></script>
 <script>
-// Supporting functions for rich dashboard
-let equityData = [12400, 12420, 12480, 12510, 12490, 12540, 12580];
-let trades = [];
-let whaleItems = [];
-
+// Rich supporting functions
 function initPairs() {
-  const pairs = ['XAU/USD','XAG/USD','BTC/USDT','ETH/USDT','SOL/USDT','BNB/USDT'];
+  const pairs = ['XAU/USD','XAG/USD','BTC/USDT','ETH/USDT','SOL/USDT'];
   const grid = document.getElementById('pairGrid');
+  grid.innerHTML = '';
   pairs.forEach(p => {
     const el = document.createElement('div');
     el.className = 'pair-badge on';
@@ -154,88 +150,72 @@ function drawEquity() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
+
   ctx.beginPath();
   ctx.strokeStyle = '#00d4aa';
   ctx.lineWidth = 3;
-  ctx.shadowBlur = 15;
+  ctx.shadowBlur = 20;
   ctx.shadowColor = '#00d4aa';
-  
-  ctx.moveTo(0, 100);
-  for (let i = 0; i < equityData.length; i++) {
-    const x = (i / (equityData.length - 1)) * canvas.width;
-    const y = canvas.height - ((equityData[i] - 12300) / 300) * canvas.height;
+
+  ctx.moveTo(0, 120);
+  for (let i = 0; i < 120; i++) {
+    const x = i * (canvas.width / 120);
+    const y = 80 + Math.sin(i / 8) * 35 + Math.random() * 8;
     ctx.lineTo(x, y);
   }
   ctx.stroke();
 }
 
-function addTrade(side, pair, confidence) {
+function addTrade(side, pair, conf) {
   const log = document.getElementById('tradeLog');
-  const entry = document.createElement('div');
-  entry.className = 'trade-item';
-  entry.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px">
+  const item = document.createElement('div');
+  item.className = 'trade-item';
+  item.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px">
       <span class="trade-side ${side[0]}">${side}</span>
       <span class="trade-pair">${pair}</span>
     </div>
     <div style="text-align:right">
-      <div class="trade-pnl ${side === 'BUY' ? 'green' : 'red'}">+$${(Math.random()*70 + 25).toFixed(2)}</div>
-      <div style="font-size:10px;color:var(--muted)">${confidence}% confidence</div>
+      <div class="trade-pnl ${side==='BUY'?'green':'red'}">+$${(Math.random()*65+28).toFixed(2)}</div>
+      <div style="font-size:10px;color:var(--muted)">${conf}%</div>
     </div>
   `;
-  log.prepend(entry);
-  if (log.children.length > 8) log.removeChild(log.lastChild);
+  log.prepend(item);
 }
 
 function addWhaleAlert() {
   const feed = document.getElementById('whaleFeed');
-  const entry = document.createElement('div');
-  entry.className = 'whale-item';
-  entry.innerHTML = `
+  const item = document.createElement('div');
+  item.className = 'whale-item';
+  item.innerHTML = `
     <div class="whale-dot large"></div>
     <div class="whale-body">
-      <div class="whale-amount" style="color:var(--sell)">12.4K BTC</div>
+      <div class="whale-amount">12.4K BTC</div>
       <div class="whale-detail">Whale wallet → Unknown</div>
     </div>
     <div class="whale-time">just now</div>
   `;
-  feed.prepend(entry);
-  if (feed.children.length > 7) feed.removeChild(feed.lastChild);
+  feed.prepend(item);
 }
 
 function toggleLive(checked) {
   liveActive = checked;
-  document.getElementById('statusText').textContent = checked ? 'NEURAL CORE — LIVE' : 'PAUSED';
 }
 
 function emergencyHalt() {
   document.getElementById('liveToggle').checked = false;
   toggleLive(false);
   document.getElementById('statusText').textContent = 'EMERGENCY HALT';
-  document.getElementById('statusText').style.color = 'var(--sell)';
 }
 
-// Boot the full dashboard
+// Boot
 function bootDashboard() {
   initPairs();
   drawEquity();
-  
-  // Initial trades and whales
-  for (let i = 0; i < 5; i++) addTrade('BUY', 'BTC/USDT', 82);
-  for (let i = 0; i < 6; i++) addWhaleAlert();
+  for (let i = 0; i < 6; i++) addTrade('BUY', 'BTC/USDT', 82);
+  for (let i = 0; i < 5; i++) addWhaleAlert();
 
-  // Start Neural Brain
   if (typeof initNeuralCore === 'function') initNeuralCore();
-
-  // Clock & Scan counter
-  setInterval(() => {
-    const now = new Date();
-    document.getElementById('clockEl').textContent = now.toUTCString().slice(17,25) + ' UTC';
-    let scans = parseInt(document.getElementById('scanCount').textContent.replace(/\D/g,'')) || 0;
-    scans += Math.floor(Math.random() * 800 + 400);
-    document.getElementById('scanCount').textContent = `Scans: ${scans.toLocaleString()}`;
-  }, 1000);
 }
 
 window.onload = bootDashboard;
