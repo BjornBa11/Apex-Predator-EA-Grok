@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Predator EA — Neural Core v1.0</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">APEX<span>PREDATOR</span></div>
+    <div class="status-dot" id="statusDot"></div>
+    <div class="status-text" id="statusText">NEURAL CORE — LIVE</div>
+    <div style="color:var(--muted);font-size:11px;margin-left:8px" id="scanCount">Scans: 0</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:18px">
+    <div style="text-align:right">
+      <div style="font-size:10px;color:var(--muted)">EQUITY</div>
+      <div id="equityVal" style="font-weight:700;color:var(--buy);font-size:15px">$12,480.50</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:var(--muted)">DAILY P&L</div>
+      <div id="dailyPnl" style="font-weight:700;font-size:15px;color:var(--buy)">+$284.30</div>
+    </div>
+    <div class="clock" id="clockEl">--:--:--</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT COLUMN -->
+  <div class="col">
+    <div class="card">
+      <div class="card-title">Apex Neural Signal</div>
+      <div id="signalBox" class="signal-box BUY">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="signal-label" id="signalLabel">BUY</div>
+          <div style="text-align:right">
+            <div id="sigCountBig" style="font-size:22px;font-weight:800;color:var(--buy)">7/9</div>
+          </div>
+        </div>
+        <div class="signal-pair" id="signalPair">XAU/USD · 2s cycle</div>
+        <div class="confidence">Neural Confidence: <span id="confPct" style="color:var(--buy)">89%</span></div>
+        <div class="confidence-bar-wrap"><div id="confBar" class="confidence-bar" style="width:89%;background:var(--buy)"></div></div>
+      </div>
+
+      <div style="margin-top:8px;background:var(--bg3);border-radius:8px;padding:9px 10px;">
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">9-LAYER NEURAL CHECKLIST</div>
+        <div id="signalChecks"></div>
+        <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:10px;color:var(--muted)">Whale Conviction</div>
+          <div id="whaleScore" style="font-size:14px;font-weight:800;color:var(--whale)">9.2</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Technical Indicators</div>
+      <div class="ind-grid" id="indGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Market Snapshot</div>
+      <div id="marketSnapshot"></div>
+    </div>
+  </div>
+
+  <!-- MIDDLE COLUMN -->
+  <div class="col">
+    <div class="card">
+      <div class="card-title">Equity Curve (session)</div>
+      <canvas id="equityChart"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Live Trade Log</div>
+      <div id="tradeLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Whale Activity Feed — Real-time</div>
+      <div id="whaleFeed"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="col">
+    <div class="card">
+      <div class="card-title">EA Controls</div>
+      <div style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <label class="toggle">
+            <input type="checkbox" id="liveToggle" checked onchange="toggleLive(this.checked)">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span style="font-size:12px;color:var(--text)">Live trading</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label class="toggle">
+            <input type="checkbox" id="whaleBoost" checked>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span style="font-size:12px;color:var(--text)">Whale Intelligence Boost</span>
+        </div>
+      </div>
+
+      <div class="ctrl-row">
+        <div class="ctrl-row-top"><span class="ctrl-label">Min Neural Confidence</span><span class="ctrl-val" id="minConfVal">75%</span></div>
+        <input type="range" class="ctrl-input" min="60" max="95" value="75" id="minConfRange" oninput="document.getElementById('minConfVal').textContent=this.value+'%'">
+      </div>
+
+      <button class="btn halt" onclick="emergencyHalt()">⛔ EMERGENCY HALT</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Active Pairs</div>
+      <div class="pair-grid" id="pairGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Session Performance</div>
+      <div id="sessionStats"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/neural-brain.js"></script>
+<script>
+// Original supporting functions (minimal version to make dashboard work)
+let equityData = [];
+let trades = [];
+let whaleItems = [];
+
+function initPairs() {
+  const grid = document.getElementById('pairGrid');
+  const pairs = ['XAU/USD','XAG/USD','BTC/USDT','ETH/USDT','SOL/USDT'];
+  pairs.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'pair-badge on';
+    el.textContent = p;
+    grid.appendChild(el);
+  });
+}
+
+function drawEquity() {
+  const canvas = document.getElementById('equityChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  // Simple demo equity curve
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.beginPath();
+  ctx.strokeStyle = '#00d4aa';
+  ctx.lineWidth = 2;
+  ctx.moveTo(0, 100);
+  for (let i = 0; i < 100; i++) {
+    ctx.lineTo(i*5, 80 + Math.sin(i/10)*30);
+  }
+  ctx.stroke();
+}
+
+function addTrade(side, pair, confidence) {
+  const log = document.getElementById('tradeLog');
+  const entry = document.createElement('div');
+  entry.className = 'trade-item';
+  entry.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="trade-side ${side[0]}">${side}</span>
+      <span class="trade-pair">${pair}</span>
+    </div>
+    <div style="text-align:right">
+      <div class="trade-pnl green">+$${ (Math.random()*80 + 20).toFixed(2) }</div>
+      <div style="font-size:10px;color:var(--muted)">${confidence}% confidence</div>
+    </div>
+  `;
+  log.prepend(entry);
+}
+
+function addWhaleAlert() {
+  const feed = document.getElementById('whaleFeed');
+  const entry = document.createElement('div');
+  entry.className = 'whale-item';
+  entry.innerHTML = `
+    <div class="whale-dot large"></div>
+    <div class="whale-body">
+      <div class="whale-amount">12.4K BTC</div>
+      <div class="whale-detail">Whale wallet → Unknown</div>
+    </div>
+    <div class="whale-time">just now</div>
+  `;
+  feed.prepend(entry);
+}
+
+// Boot everything
+function bootDashboard() {
+  initPairs();
+  drawEquity();
+  for (let i = 0; i < 6; i++) addWhaleAlert();
+  
+  // Start the new Neural Brain
+  if (typeof initNeuralCore === 'function') {
+    initNeuralCore();
+  }
+  
+  // Clock
+  setInterval(() => {
+    const now = new Date();
+    document.getElementById('clockEl').textContent = now.toUTCString().slice(17,25) + ' UTC';
+  }, 1000);
+}
+
+window.onload = bootDashboard;
+</script>
+</body>
+</html>
