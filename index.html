@@ -90,3 +90,186 @@
     </div>
 
 <!-- END OF PART 1 -->
+<!-- START OF PART 2 -->
+
+    <!-- Whale activity feed -->
+    <div class="card">
+      <div class="card-title">Whale activity feed — real-time</div>
+      <div id="whaleFeed"></div>
+    </div>
+
+    <!-- API Connections -->
+    <div class="card">
+      <div class="card-title">API connections</div>
+      <div class="conn-row"><div class="conn-dot ok"></div><div class="conn-name">Binance WebSocket</div><div class="conn-latency" id="l1">12ms</div></div>
+      <div class="conn-row"><div class="conn-dot ok"></div><div class="conn-name">MT5 / MetaAPI bridge</div><div class="conn-latency" id="l2">28ms</div></div>
+      <div class="conn-row"><div class="conn-dot ok"></div><div class="conn-name">Whale Alert API</div><div class="conn-latency" id="l3">45ms</div></div>
+      <div class="conn-row"><div class="conn-dot ok"></div><div class="conn-name">Glassnode on-chain</div><div class="conn-latency" id="l4">62ms</div></div>
+      <div class="conn-row"><div class="conn-dot ok"></div><div class="conn-name">Nansen wallet labels</div><div class="conn-latency" id="l5">74ms</div></div>
+      <div class="conn-row"><div class="conn-dot warn"></div><div class="conn-name">Hyperliquid perps DEX</div><div class="conn-latency" id="l6">110ms</div></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="col">
+
+    <!-- EA controls -->
+    <div class="card">
+      <div class="card-title">EA controls</div>
+
+      <div style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <label class="toggle">
+            <input type="checkbox" id="liveToggle" checked onchange="toggleLive(this.checked)">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span style="font-size:12px;color:var(--text)">Live trading</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label class="toggle">
+            <input type="checkbox" id="whaleBoost" checked>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <span style="font-size:12px;color:var(--text)">Whale Intelligence Boost</span>
+        </div>
+      </div>
+
+      <div class="ctrl-row">
+        <div class="ctrl-row-top"><span class="ctrl-label">Min Neural Confidence</span><span class="ctrl-val" id="minConfVal">75%</span></div>
+        <input type="range" class="ctrl-input" min="60" max="95" value="75" id="minConfRange" oninput="document.getElementById('minConfVal').textContent=this.value+'%'">
+      </div>
+
+      <button class="btn halt" onclick="emergencyHalt()">⛔ EMERGENCY HALT</button>
+    </div>
+
+    <!-- Active pairs -->
+    <div class="card">
+      <div class="card-title">Active pairs</div>
+      <div class="pair-grid" id="pairGrid"></div>
+    </div>
+
+    <!-- Session performance -->
+    <div class="card">
+      <div class="card-title">Session performance</div>
+      <div id="sessionStats"></div>
+    </div>
+
+    <!-- Connected repos -->
+    <div class="card">
+      <div class="card-title">Connected open-source repos</div>
+      <div class="repo-row">
+        <div>
+          <div class="repo-name">wen82fastik/ai-trading-bot</div>
+          <div style="font-size:10px;color:var(--muted)">LLM agent core · Binance · MT5</div>
+        </div>
+        <span class="repo-tag">Python</span>
+      </div>
+      <div class="repo-row">
+        <div>
+          <div class="repo-name">freqtrade/freqtrade</div>
+          <div style="font-size:10px;color:var(--muted)">Backtest · strategy engine</div>
+        </div>
+        <span class="repo-tag">Python</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/neural-brain.js"></script>
+<script>
+// Supporting functions (rich version)
+function initPairs() {
+  const pairs = ['XAU/USD','XAG/USD','BTC/USDT','ETH/USDT','SOL/USDT','BNB/USDT'];
+  const grid = document.getElementById('pairGrid');
+  grid.innerHTML = '';
+  pairs.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'pair-badge on';
+    el.textContent = p;
+    grid.appendChild(el);
+  });
+}
+
+function drawEquity() {
+  const canvas = document.getElementById('equityChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#00d4aa';
+  ctx.lineWidth = 3;
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#00d4aa';
+  ctx.moveTo(0, 130);
+  for (let i = 0; i < 130; i++) {
+    const x = i * (canvas.width / 130);
+    const y = 90 + Math.sin(i / 9) * 35;
+    ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function addTrade(side, pair, conf) {
+  const log = document.getElementById('tradeLog');
+  const item = document.createElement('div');
+  item.className = 'trade-item';
+  item.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="trade-side ${side[0]}">${side}</span>
+      <span class="trade-pair">${pair}</span>
+    </div>
+    <div style="text-align:right">
+      <div class="trade-pnl ${side==='BUY'?'green':'red'}">+$${(Math.random()*65+30).toFixed(2)}</div>
+      <div style="font-size:10px;color:var(--muted)">${conf}%</div>
+    </div>
+  `;
+  log.prepend(item);
+}
+
+function addWhaleAlert() {
+  const feed = document.getElementById('whaleFeed');
+  const item = document.createElement('div');
+  item.className = 'whale-item';
+  item.innerHTML = `
+    <div class="whale-dot large"></div>
+    <div class="whale-body">
+      <div class="whale-amount">12.4K BTC</div>
+      <div class="whale-detail">Whale wallet → Unknown</div>
+    </div>
+    <div class="whale-time">just now</div>
+  `;
+  feed.prepend(item);
+}
+
+function toggleLive(checked) {
+  liveActive = checked;
+}
+
+function emergencyHalt() {
+  document.getElementById('liveToggle').checked = false;
+  toggleLive(false);
+  document.getElementById('statusText').textContent = 'EMERGENCY HALT';
+}
+
+// Boot the full rich dashboard
+function bootDashboard() {
+  initPairs();
+  drawEquity();
+  
+  // Add initial content
+  for (let i = 0; i < 8; i++) addTrade('BUY', 'BTC/USDT', 80 + Math.floor(Math.random()*15));
+  for (let i = 0; i < 6; i++) addWhaleAlert();
+
+  // Start the new Neural Brain
+  if (typeof initNeuralCore === 'function') initNeuralCore();
+}
+
+window.onload = bootDashboard;
+</script>
+</body>
+</html>
